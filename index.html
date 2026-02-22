@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whack — Unlock Your Creative Mind</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ochre: #C8893A; --terracotta: #C4573A; --sage: #6B8C6E;
+    --cream: #F5EDD8; --deep-cream: #EDE0C4; --dark: #2A1F14;
+    --mid: #5C4A35; --warm-white: #FAF6EE; --ink: #1C1410;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--warm-white); color:var(--ink); min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:1000; opacity:0.4; }
+
+  .screen { display:none; min-height:100vh; animation:fadeIn 0.5s ease forwards; }
+  .screen.active { display:flex; flex-direction:column; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  /* WELCOME */
+  #screen-welcome { background:var(--dark); align-items:center; justify-content:center; text-align:center; padding:40px 32px; position:relative; overflow:hidden; }
+  #screen-welcome::after { content:''; position:absolute; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(200,137,58,0.15) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+  .jester-svg { width:88px; height:88px; animation:float 3s ease-in-out infinite; margin-bottom:28px; display:block; margin-left:auto; margin-right:auto; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .welcome-title { font-family:'DM Serif Display',serif; font-size:clamp(48px,13vw,76px); color:var(--cream); line-height:0.9; margin-bottom:14px; letter-spacing:-2px; }
+  .welcome-title span { color:var(--ochre); font-style:italic; }
+  .welcome-sub { font-family:'Caveat',cursive; font-size:20px; color:rgba(245,237,216,0.65); margin-bottom:40px; line-height:1.5; }
+  .btn-primary { display:inline-flex; align-items:center; gap:10px; background:var(--ochre); color:var(--dark); font-family:'DM Sans',sans-serif; font-weight:500; font-size:16px; padding:16px 36px; border-radius:100px; border:none; cursor:pointer; transition:all 0.2s; }
+  .btn-primary:hover { background:#D99B4A; transform:translateY(-2px); box-shadow:0 8px 24px rgba(200,137,58,0.4); }
+  .welcome-stats { display:flex; gap:32px; margin-top:48px; opacity:0.45; justify-content:center; }
+  .stat-num { font-family:'DM Serif Display',serif; font-size:26px; color:var(--cream); }
+  .stat-label { font-size:11px; color:var(--deep-cream); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
+
+  /* ONBOARDING */
+  .onboarding-overlay { position:fixed; inset:0; background:rgba(26,15,8,0.78); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
+  .onboarding-card { background:var(--cream); border-radius:24px; padding:32px 28px; max-width:460px; width:100%; box-shadow:0 24px 60px rgba(26,15,8,0.4); animation:cardReveal 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; position:relative; }
+  @keyframes cardReveal { from{transform:scale(0.88) translateY(16px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+  .ob-icon { font-size:44px; margin-bottom:14px; display:block; text-align:center; }
+  .ob-title { font-family:'DM Serif Display',serif; font-size:26px; color:var(--dark); text-align:center; margin-bottom:18px; line-height:1.2; }
+  .ob-title em { color:var(--ochre); font-style:italic; }
+  .ob-steps { display:flex; flex-direction:column; gap:12px; margin-bottom:20px; }
+  .ob-step { display:flex; align-items:flex-start; gap:12px; }
+  .ob-step-num { width:26px; height:26px; border-radius:50%; background:var(--dark); color:var(--cream); font-size:12px; font-weight:600; flex-shrink:0; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .ob-step-text { font-size:13.5px; color:var(--mid); line-height:1.5; }
+  .ob-step-text strong { color:var(--dark); }
+  .ob-roles { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; }
+  .ob-role { padding:5px 12px; border-radius:100px; font-size:12px; font-weight:500; }
+  .ob-role.explorer { background:rgba(107,140,110,0.15); color:var(--sage); }
+  .ob-role.artist { background:rgba(200,137,58,0.15); color:var(--ochre); }
+  .ob-role.judge { background:rgba(92,74,53,0.12); color:var(--mid); }
+  .ob-role.warrior { background:rgba(196,87,58,0.15); color:var(--terracotta); }
+  .ob-privacy { background:rgba(42,31,20,0.05); border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-bottom:20px; font-size:13px; color:var(--mid); line-height:1.4; }
+  .btn-ob-start { width:100%; padding:15px; background:var(--dark); color:var(--cream); border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .btn-ob-start:hover { background:var(--mid); }
+
+  /* DRAW SCREEN */
+  #screen-draw { background:var(--cream); justify-content:space-between; }
+  .draw-header { padding:20px 24px 0; display:flex; justify-content:space-between; align-items:center; }
+  .logo-small { font-family:'DM Serif Display',serif; font-size:20px; color:var(--dark); }
+  .logo-small span { color:var(--ochre); font-style:italic; }
+  .streak-badge { display:flex; align-items:center; gap:6px; background:var(--dark); color:var(--cream); padding:7px 14px; border-radius:100px; font-size:13px; font-weight:500; }
+  .draw-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 28px; gap:20px; }
+  .draw-label { font-family:'Caveat',cursive; font-size:20px; color:var(--mid); text-align:center; }
+  .card-deck { position:relative; width:220px; height:312px; cursor:pointer; }
+  .deck-shadow { position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); width:180px; height:18px; background:radial-gradient(ellipse,rgba(42,31,20,0.22) 0%,transparent 70%); border-radius:50%; }
+  .card-layer { position:absolute; inset:0; border-radius:16px; background:var(--dark); border:2px solid rgba(200,137,58,0.3); }
+  .card-layer:nth-child(1){transform:rotate(4deg) translateY(6px);opacity:0.4}
+  .card-layer:nth-child(2){transform:rotate(-2deg) translateY(3px);opacity:0.6}
+  .card-layer:nth-child(3){transform:rotate(1deg);opacity:0.8}
+  .card-top { position:absolute; inset:0; border-radius:16px; background:var(--dark); border:2px solid rgba(200,137,58,0.5); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; transition:transform 0.15s; box-shadow:0 8px 32px rgba(42,31,20,0.2); }
+  .card-deck:hover .card-top { transform:rotate(-2deg) translateY(-8px); box-shadow:0 20px 40px rgba(42,31,20,0.25); }
+  .card-back-text { font-family:'Caveat',cursive; font-size:16px; color:var(--ochre); }
+  .tap-hint { font-family:'Caveat',cursive; font-size:15px; color:var(--mid); opacity:0.5; animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.35} 50%{opacity:0.75} }
+  .draw-footer { padding:20px 24px; }
+  .vault-peek { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; background:rgba(42,31,20,0.06); border-radius:100px; cursor:pointer; transition:all 0.2s; border:none; width:100%; }
+  .vault-peek:hover { background:rgba(42,31,20,0.1); }
+  .vault-peek span { font-size:13px; color:var(--mid); font-weight:500; }
+
+  /* CARD+JOURNAL SCREEN */
+  #screen-card { background:var(--warm-white); }
+  .card-page-header { padding:14px 22px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(42,31,20,0.07); background:var(--warm-white); position:sticky; top:0; z-index:10; }
+  .btn-back { width:34px; height:34px; border-radius:50%; border:1px solid rgba(42,31,20,0.15); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; transition:all 0.2s; flex-shrink:0; }
+  .btn-back:hover { background:var(--deep-cream); }
+  .role-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 14px; border-radius:100px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; }
+  .role-explorer { background:rgba(107,140,110,0.15); color:var(--sage); }
+  .role-artist { background:rgba(200,137,58,0.15); color:var(--ochre); }
+  .role-judge { background:rgba(92,74,53,0.12); color:var(--mid); }
+  .role-warrior { background:rgba(196,87,58,0.15); color:var(--terracotta); }
+
+  /* TWO-COLUMN LAYOUT */
+  .card-two-col { display:grid; grid-template-columns:1fr 1fr; flex:1; }
+  @media(max-width:680px) { .card-two-col { grid-template-columns:1fr; } }
+
+  /* LEFT COL */
+  .card-left { background:var(--dark); padding:28px 26px; display:flex; flex-direction:column; gap:20px; position:relative; overflow:hidden; }
+  .card-left::before { content:''; position:absolute; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(200,137,58,0.09) 0%,transparent 70%); bottom:-80px; right:-60px; pointer-events:none; }
+  .card-number-big { position:absolute; top:12px; right:18px; font-family:'DM Serif Display',serif; font-size:72px; color:rgba(255,255,255,0.04); line-height:1; pointer-events:none; }
+  .card-title { font-family:'DM Serif Display',serif; font-size:clamp(24px,3.5vw,36px); color:var(--cream); line-height:1.15; }
+  .card-title em { color:var(--ochre); font-style:italic; }
+  .card-divider { width:32px; height:2px; background:var(--ochre); border-radius:2px; }
+  .card-body-text { font-family:'Caveat',cursive; font-size:17px; color:rgba(245,237,216,0.7); line-height:1.65; }
+  .timer-row { display:flex; align-items:center; gap:10px; }
+  .timer-dot { width:7px; height:7px; border-radius:50%; background:var(--sage); animation:timerPulse 1s ease-in-out infinite; flex-shrink:0; }
+  .timer-dot.urgent { background:var(--terracotta); }
+  @keyframes timerPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.6} }
+  .timer-text-disp { font-family:'Caveat',cursive; font-size:20px; color:rgba(245,237,216,0.7); min-width:44px; }
+  .timer-bar-track { flex:1; height:3px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+  .timer-bar-fill { height:100%; background:var(--sage); border-radius:3px; width:100%; transition:width 1s linear,background 0.5s; }
+  .timer-bar-fill.urgent { background:var(--terracotta); }
+  .btn-timer { font-size:12px; background:none; border:1px solid rgba(245,237,216,0.2); padding:5px 12px; border-radius:100px; cursor:pointer; color:rgba(245,237,216,0.6); transition:all 0.2s; white-space:nowrap; }
+  .btn-timer:hover { border-color:rgba(245,237,216,0.5); color:var(--cream); }
+  .prompt-box { background:rgba(245,237,216,0.07); border:1px solid rgba(200,137,58,0.2); border-radius:14px; padding:18px; margin-top:auto; }
+  .prompt-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.12em; color:var(--ochre); margin-bottom:8px; }
+  .prompt-question { font-family:'DM Serif Display',serif; font-size:16px; color:var(--cream); line-height:1.55; }
+
+  /* RIGHT COL */
+  .card-right { background:var(--warm-white); padding:24px 24px 20px; display:flex; flex-direction:column; gap:14px; }
+  .journal-top-row { display:flex; align-items:center; justify-content:space-between; }
+  .journal-label { font-family:'Caveat',cursive; font-size:18px; color:var(--mid); }
+  .word-count { font-size:12px; color:var(--mid); opacity:0.45; }
+  .mode-tabs { display:flex; gap:4px; background:rgba(42,31,20,0.06); border-radius:100px; padding:4px; width:fit-content; }
+  .mode-tab { padding:6px 14px; border-radius:100px; border:none; background:transparent; font-size:13px; font-weight:500; color:var(--mid); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:5px; }
+  .mode-tab.active { background:var(--dark); color:var(--cream); }
+  .mode-tab:hover:not(.active) { background:rgba(42,31,20,0.08); }
+
+  /* Write */
+  .journal-input { flex:1; min-height:180px; padding:14px 16px; border:2px solid transparent; border-radius:12px; background:white; font-family:'Caveat',cursive; font-size:18px; color:var(--dark); line-height:1.65; resize:none; outline:none; transition:all 0.2s; box-shadow:0 1px 4px rgba(42,31,20,0.06); }
+  .journal-input:focus { border-color:var(--ochre); box-shadow:0 0 0 4px rgba(200,137,58,0.1); }
+  .journal-input::placeholder { color:rgba(92,74,53,0.38); }
+
+  /* Voice */
+  .voice-panel { flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:white; border-radius:12px; padding:28px 20px; box-shadow:0 1px 4px rgba(42,31,20,0.06); min-height:180px; }
+  .voice-panel.visible { display:flex; }
+  .mic-btn { width:76px; height:76px; border-radius:50%; border:none; cursor:pointer; background:var(--dark); color:white; font-size:26px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+  .mic-btn:hover { background:var(--mid); transform:scale(1.05); }
+  .mic-btn.recording { background:var(--terracotta); animation:micPulse 1.2s ease-in-out infinite; }
+  @keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(196,87,58,0.5)} 50%{box-shadow:0 0 0 16px rgba(196,87,58,0)} }
+  .voice-hint { font-family:'Caveat',cursive; font-size:17px; color:var(--mid); text-align:center; line-height:1.5; }
+  .voice-duration { font-size:12px; color:var(--mid); opacity:0.45; font-family:'Caveat',cursive; font-size:18px; }
+  .voice-transcript { width:100%; background:rgba(42,31,20,0.04); border-radius:10px; padding:14px; font-family:'Caveat',cursive; font-size:17px; color:var(--mid); line-height:1.6; min-height:50px; display:none; }
+  .voice-transcript.visible { display:block; }
+
+  /* Draw */
+  .draw-panel { flex:1; display:none; flex-direction:column; gap:8px; min-height:180px; }
+  .draw-panel.visible { display:flex; }
+  .draw-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .draw-colors { display:flex; gap:5px; }
+  .color-swatch { width:22px; height:22px; border-radius:50%; cursor:pointer; border:2.5px solid transparent; transition:all 0.15s; }
+  .color-swatch.active { border-color:var(--dark); transform:scale(1.2); }
+  .brush-sizes { display:flex; gap:5px; }
+  .brush-btn { border:1.5px solid rgba(42,31,20,0.14); background:white; border-radius:100px; cursor:pointer; padding:3px 10px; font-size:12px; color:var(--mid); transition:all 0.15s; }
+  .brush-btn.active { background:var(--dark); color:var(--cream); border-color:var(--dark); }
+  .draw-sep { width:1px; height:18px; background:rgba(42,31,20,0.1); }
+  .btn-clear { margin-left:auto; font-size:12px; color:var(--mid); background:none; border:1px solid rgba(42,31,20,0.14); padding:4px 10px; border-radius:100px; cursor:pointer; transition:all 0.2s; }
+  .btn-clear:hover { color:var(--terracotta); border-color:var(--terracotta); }
+  #draw-canvas { flex:1; border-radius:12px; background:white; cursor:crosshair; box-shadow:0 1px 4px rgba(42,31,20,0.06); touch-action:none; display:block; }
+  .draw-tip { font-family:'Caveat',cursive; font-size:13px; color:var(--mid); opacity:0.45; text-align:center; }
+
+  /* Save */
+  .save-area { display:flex; flex-direction:column; gap:8px; margin-top:auto; }
+  .btn-save { width:100%; padding:15px; background:var(--dark); color:var(--cream); border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-save:hover { background:var(--mid); transform:translateY(-1px); box-shadow:0 6px 20px rgba(42,31,20,0.18); }
+  .private-note { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--mid); opacity:0.4; justify-content:center; }
+
+  /* SAVED */
+  #screen-saved { background:var(--dark); align-items:center; justify-content:center; text-align:center; padding:40px 32px; }
+  .save-celebration { animation:celebIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  @keyframes celebIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  .celebration-icon { font-size:64px; margin-bottom:18px; display:block; animation:wiggle 0.5s ease 0.3s both; }
+  @keyframes wiggle { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-10deg)} 75%{transform:rotate(10deg)} }
+  .save-title { font-family:'DM Serif Display',serif; font-size:32px; color:var(--cream); margin-bottom:10px; }
+  .save-subtitle { font-family:'Caveat',cursive; font-size:18px; color:rgba(245,237,216,0.5); margin-bottom:28px; line-height:1.4; }
+  .card-saved-preview { background:rgba(245,237,216,0.06); border:1px solid rgba(200,137,58,0.22); border-radius:14px; padding:16px 20px; margin-bottom:24px; text-align:left; max-width:360px; }
+  .saved-card-name { font-family:'DM Serif Display',serif; font-size:16px; color:var(--ochre); margin-bottom:7px; }
+  .saved-entry-preview { font-family:'Caveat',cursive; font-size:15px; color:rgba(245,237,216,0.42); line-height:1.5; }
+  .save-actions { display:flex; flex-direction:column; gap:10px; width:100%; max-width:280px; }
+  .btn-vault { padding:14px; background:var(--ochre); color:var(--dark); border:none; border-radius:100px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .btn-vault:hover { background:#D99B4A; }
+  .btn-another { padding:14px; background:transparent; color:var(--cream); border:1.5px solid rgba(245,237,216,0.18); border-radius:100px; font-family:'DM Sans',sans-serif; font-size:15px; cursor:pointer; transition:all 0.2s; }
+  .btn-another:hover { border-color:rgba(245,237,216,0.45); }
+  .confetti-container { position:fixed; inset:0; pointer-events:none; z-index:999; }
+  .confetti-piece { position:absolute; border-radius:2px; animation:confettiFall linear forwards; }
+  @keyframes confettiFall { from{transform:translateY(-20px) rotate(0deg);opacity:1} to{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+  /* VAULT */
+  #screen-vault { background:var(--warm-white); }
+  .vault-header { padding:18px 22px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(42,31,20,0.07); }
+  .vault-title { font-family:'DM Serif Display',serif; font-size:24px; color:var(--dark); }
+  .vault-count { font-family:'Caveat',cursive; font-size:15px; color:var(--mid); opacity:0.5; }
+  .vault-body { flex:1; padding:18px 22px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+  .vault-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:40px; opacity:0.5; }
+  .vault-empty-icon { font-size:44px; }
+  .vault-empty-text { font-family:'Caveat',cursive; font-size:19px; color:var(--mid); line-height:1.5; }
+  .vault-entry { background:white; border-radius:14px; padding:16px; border:1px solid rgba(42,31,20,0.06); box-shadow:0 1px 6px rgba(42,31,20,0.04); animation:entryIn 0.35s ease forwards; }
+  @keyframes entryIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .entry-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .entry-card-name { font-family:'DM Serif Display',serif; font-size:15px; color:var(--dark); display:flex; align-items:center; gap:7px; }
+  .entry-role-dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .entry-date { font-size:11px; color:var(--mid); opacity:0.4; }
+  .entry-text { font-family:'Caveat',cursive; font-size:16px; color:var(--mid); line-height:1.6; }
+  .entry-canvas-preview { border-radius:8px; max-width:100%; margin-top:8px; border:1px solid rgba(42,31,20,0.07); }
+  .map-label { font-size:11px; color:var(--mid); opacity:0.42; text-align:center; margin-bottom:7px; }
+  .vault-map { display:grid; grid-template-columns:repeat(8,1fr); gap:5px; padding:16px; background:var(--cream); border-radius:14px; margin-bottom:2px; }
+  .map-dot { aspect-ratio:1; border-radius:4px; background:rgba(42,31,20,0.08); transition:all 0.2s; }
+  .map-dot.unlocked { background:var(--ochre); }
+  .map-dot.unlocked:hover { transform:scale(1.3); cursor:pointer; }
+  .map-dot.today { background:var(--terracotta); animation:glow 1.5s ease-in-out infinite; }
+  @keyframes glow { 0%,100%{box-shadow:0 0 0 0 rgba(196,87,58,0.4)} 50%{box-shadow:0 0 0 6px rgba(196,87,58,0)} }
+
+  /* COPYRIGHT FOOTER */
+  .app-footer { padding:16px 24px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .footer-copy { font-size:11px; color:rgba(245,237,216,0.3); letter-spacing:0.02em; }
+  .footer-links { display:flex; gap:16px; }
+  .footer-link { font-size:11px; color:rgba(245,237,216,0.35); cursor:pointer; text-decoration:none; background:none; border:none; transition:color 0.2s; letter-spacing:0.02em; }
+  .footer-link:hover { color:rgba(245,237,216,0.7); }
+  .footer-light .footer-copy { color:rgba(92,74,53,0.4); }
+  .footer-light .footer-link { color:rgba(92,74,53,0.45); }
+  .footer-light .footer-link:hover { color:var(--mid); }
+
+  /* PRIVACY SCREEN */
+  #screen-privacy { background:var(--warm-white); }
+  .privacy-header { padding:16px 22px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(42,31,20,0.07); }
+  .privacy-body { flex:1; padding:28px 28px 40px; overflow-y:auto; max-width:680px; }
+  .privacy-title { font-family:'DM Serif Display',serif; font-size:28px; color:var(--dark); margin-bottom:6px; }
+  .privacy-date { font-size:12px; color:var(--mid); opacity:0.5; margin-bottom:28px; }
+  .privacy-section { margin-bottom:24px; }
+  .privacy-section h3 { font-family:'DM Serif Display',serif; font-size:17px; color:var(--dark); margin-bottom:8px; }
+  .privacy-section p { font-size:14px; color:var(--mid); line-height:1.7; }
+  .privacy-section ul { font-size:14px; color:var(--mid); line-height:1.8; padding-left:20px; margin-top:6px; }
+  .privacy-highlight { background:rgba(107,140,110,0.12); border-left:3px solid var(--sage); border-radius:0 10px 10px 0; padding:14px 18px; margin-bottom:24px; font-size:14px; color:var(--mid); line-height:1.65; }
+  .privacy-highlight strong { color:var(--dark); }
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div class="onboarding-overlay" id="onboarding-overlay" style="display:none;" onclick="if(event.target===this)dismissOnboarding()">
+  <div class="onboarding-card">
+    <button onclick="dismissOnboarding()" style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(42,31,20,0.12);background:transparent;cursor:pointer;font-size:14px;color:var(--mid);display:flex;align-items:center;justify-content:center;">✕</button>
+    <span class="ob-icon">🃏</span>
+    <h2 class="ob-title">Your daily <em>creative workout</em></h2>
+    <div class="ob-steps">
+      <div class="ob-step">
+        <div class="ob-step-num">1</div>
+        <div class="ob-step-text"><strong>Pull a card.</strong> Each one is a creative lens — a different way of seeing the world.</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-step-num">2</div>
+        <div class="ob-step-text"><strong>Read the prompt.</strong> There's no right answer, no marks, no judgement. It's just for you.</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-step-num">3</div>
+        <div class="ob-step-text"><strong>Respond your way.</strong> Write words, draw, or tap the mic and speak. Even 3 minutes makes a difference.</div>
+      </div>
+    </div>
+    <div class="ob-roles">
+      <div class="ob-role explorer">🧭 Explorer</div>
+      <div class="ob-role artist">🎨 Artist</div>
+      <div class="ob-role judge">⚖️ Judge</div>
+      <div class="ob-role warrior">⚔️ Warrior</div>
+    </div>
+    <div class="ob-privacy">
+      <span style="font-size:20px;">🔒</span>
+      <span><strong>Everything is private.</strong> Your vault lives only on your device. Nobody else can see it.</span>
+    </div>
+    <button class="btn-ob-start" onclick="dismissOnboarding()">Pull my first card →</button>
+  </div>
+</div>
+
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen active">
+  <svg class="jester-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="55" r="28" fill="#C8893A" opacity="0.9"/>
+    <circle cx="50" cy="55" r="20" fill="#2A1F14"/>
+    <circle cx="44" cy="52" r="3" fill="#C8893A"/>
+    <circle cx="56" cy="52" r="3" fill="#C8893A"/>
+    <path d="M44 62 Q50 68 56 62" stroke="#C8893A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M36 42 Q28 20 20 10" stroke="#C4573A" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="20" cy="10" r="5" fill="#C4573A"/>
+    <path d="M50 35 Q50 15 50 5" stroke="#6B8C6E" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="50" cy="5" r="5" fill="#6B8C6E"/>
+    <path d="M64 42 Q72 20 80 10" stroke="#C8893A" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="80" cy="10" r="5" fill="#C8893A"/>
+  </svg>
+  <h1 class="welcome-title">Un<span>whack</span><br>your mind.</h1>
+  <p class="welcome-sub">A daily creative challenge.<br>Your private thinking space.</p>
+  <button class="btn-primary" onclick="startApp()">Pull today's card →</button>
+  <div class="welcome-stats">
+    <div class="stat-item"><div class="stat-num">64</div><div class="stat-label">Cards</div></div>
+    <div class="stat-item"><div class="stat-num">4</div><div class="stat-label">Roles</div></div>
+    <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">Ideas</div></div>
+  </div>
+  <div class="app-footer">
+    <span class="footer-copy">© 2026 Forteen Consulting. All rights reserved.</span>
+    <div class="footer-links">
+      <button class="footer-link" onclick="goTo('screen-privacy')">Privacy Policy</button>
+      <button class="footer-link" onclick="goTo('screen-privacy')">Terms of Use</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRAW CARD -->
+<div id="screen-draw" class="screen">
+  <div class="draw-header">
+    <div class="logo-small">Wh<span>ack</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="showOnboarding()" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(42,31,20,0.18);background:transparent;cursor:pointer;font-size:15px;color:var(--mid);display:flex;align-items:center;justify-content:center;transition:all 0.2s;" title="How it works">?</button>
+      <div class="streak-badge">🔥 Day <span id="streak-num">1</span></div>
+    </div>
+  </div>
+  <div class="draw-area">
+    <p class="draw-label">Your card is waiting.<br>Tap to reveal.</p>
+    <div class="card-deck" onclick="revealCard()" id="card-deck">
+      <div class="deck-shadow"></div>
+      <div class="card-back-stack">
+        <div class="card-layer"></div><div class="card-layer"></div><div class="card-layer"></div>
+      </div>
+      <div class="card-top">
+        <svg width="130" height="130" viewBox="0 0 130 130" fill="none" style="opacity:0.14">
+          <circle cx="65" cy="65" r="52" stroke="white" stroke-width="1"/>
+          <circle cx="65" cy="65" r="34" stroke="white" stroke-width="1"/>
+          <circle cx="65" cy="65" r="16" stroke="white" stroke-width="1"/>
+          <line x1="65" y1="13" x2="65" y2="117" stroke="white" stroke-width="0.5"/>
+          <line x1="13" y1="65" x2="117" y2="65" stroke="white" stroke-width="0.5"/>
+        </svg>
+        <div class="card-back-text">WHACK PACK</div>
+      </div>
+    </div>
+    <p class="tap-hint">↑ tap the deck ↑</p>
+  </div>
+  <div class="draw-footer">
+    <button class="vault-peek" onclick="goTo('screen-vault')">
+      <span>📚 My Vault</span><span style="opacity:0.3;">·</span><span id="vault-count-badge">0 entries</span>
+    </button>
+  </div>
+  <div class="app-footer footer-light">
+    <span class="footer-copy">© 2026 Forteen Consulting. All rights reserved.</span>
+    <div class="footer-links">
+      <button class="footer-link" onclick="goTo('screen-privacy')">Privacy Policy</button>
+      <button class="footer-link" onclick="goTo('screen-privacy')">Terms of Use</button>
+    </div>
+  </div>
+</div>
+
+<!-- CARD + JOURNAL -->
+<div id="screen-card" class="screen">
+  <div class="card-page-header">
+    <button class="btn-back" onclick="goTo('screen-draw')">←</button>
+    <div class="role-badge" id="role-badge">Explorer</div>
+  </div>
+  <div class="card-two-col">
+    <!-- LEFT -->
+    <div class="card-left">
+      <div class="card-number-big" id="card-num">9</div>
+      <div>
+        <div class="card-title" id="card-title">Drop An <em>Assumption</em></div>
+        <div class="card-divider" style="margin:12px 0;"></div>
+        <div class="card-body-text" id="card-text">Every idea rests on invisible foundations — things we accept without question.</div>
+      </div>
+      <div class="timer-row">
+        <div class="timer-dot" id="timer-dot"></div>
+        <span class="timer-text-disp" id="timer-text">5:00</span>
+        <div class="timer-bar-track"><div class="timer-bar-fill" id="timer-bar"></div></div>
+        <button class="btn-timer" onclick="toggleTimer()" id="timer-btn">Start</button>
+      </div>
+      <div class="prompt-box">
+        <div class="prompt-label">Today's Prompt</div>
+        <div class="prompt-question" id="prompt-text">What's the biggest assumption you're making? What if you dropped it?</div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card-right">
+      <div class="journal-top-row">
+        <div class="journal-label">Your response</div>
+        <div class="word-count" id="word-count">0 words</div>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-write" onclick="switchMode('write')">✏️ Write</button>
+        <button class="mode-tab" id="tab-voice" onclick="switchMode('voice')">🎤 Voice</button>
+        <button class="mode-tab" id="tab-draw" onclick="switchMode('draw')">🖌️ Draw</button>
+      </div>
+
+      <!-- WRITE -->
+      <textarea class="journal-input" id="journal-input"
+        placeholder="Just start. No wrong answers. No one will see this but you..."
+        oninput="updateWordCount()"></textarea>
+
+      <!-- VOICE -->
+      <div class="voice-panel" id="voice-panel">
+        <div class="voice-hint" id="voice-hint">Tap the mic and speak your thoughts.<br>No typing needed.</div>
+        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()">🎤</button>
+        <div class="voice-duration" id="voice-duration" style="opacity:0;"></div>
+        <div class="voice-transcript" id="voice-transcript"></div>
+      </div>
+
+      <!-- DRAW -->
+      <div class="draw-panel" id="draw-panel">
+        <div class="draw-toolbar">
+          <div class="draw-colors">
+            <div class="color-swatch active" style="background:#1C1410" data-color="#1C1410" onclick="setColor(this)"></div>
+            <div class="color-swatch" style="background:#C8893A" data-color="#C8893A" onclick="setColor(this)"></div>
+            <div class="color-swatch" style="background:#C4573A" data-color="#C4573A" onclick="setColor(this)"></div>
+            <div class="color-swatch" style="background:#6B8C6E" data-color="#6B8C6E" onclick="setColor(this)"></div>
+            <div class="color-swatch" style="background:#5C4A35" data-color="#5C4A35" onclick="setColor(this)"></div>
+            <div class="color-swatch" style="background:#FAF6EE;border:1.5px solid #EDE0C4;" data-color="#FAF6EE" onclick="setColor(this)"></div>
+          </div>
+          <div class="draw-sep"></div>
+          <div class="brush-sizes">
+            <button class="brush-btn active" data-size="3" onclick="setBrush(this,3)">S</button>
+            <button class="brush-btn" data-size="7" onclick="setBrush(this,7)">M</button>
+            <button class="brush-btn" data-size="14" onclick="setBrush(this,14)">L</button>
+          </div>
+          <button class="btn-clear" onclick="clearCanvas()">✕ Clear</button>
+        </div>
+        <canvas id="draw-canvas"></canvas>
+        <div class="draw-tip" id="draw-tip">Draw freely — finger, stylus, or mouse</div>
+      </div>
+
+      <div class="save-area">
+        <button class="btn-save" onclick="saveEntry()">Save to My Vault 🔒</button>
+        <div class="private-note">🔒 Only you can see this</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED -->
+<div id="screen-saved" class="screen">
+  <div class="save-celebration">
+    <span class="celebration-icon">✨</span>
+    <h2 class="save-title">Beautifully done.</h2>
+    <p class="save-subtitle">You thought something today<br>that you've never thought before.</p>
+    <div class="card-saved-preview">
+      <div class="saved-card-name" id="saved-card-name"></div>
+      <div class="saved-entry-preview" id="saved-entry-preview"></div>
+    </div>
+    <div class="save-actions">
+      <button class="btn-vault" onclick="goTo('screen-vault')">📚 See My Vault</button>
+      <button class="btn-another" onclick="goTo('screen-draw')">Draw another card</button>
+    </div>
+  </div>
+  <div class="confetti-container" id="confetti"></div>
+</div>
+
+<!-- VAULT -->
+<div id="screen-vault" class="screen">
+  <div class="vault-header">
+    <div>
+      <div class="vault-title">My Vault</div>
+      <div class="vault-count" id="vault-subtitle">Your private thinking space</div>
+    </div>
+    <button class="btn-back" onclick="goTo('screen-draw')">←</button>
+  </div>
+  <div style="padding:14px 18px 0;">
+    <div class="map-label">64 creative lenses · <span id="unlocked-count">0</span> unlocked</div>
+    <div class="vault-map" id="vault-map"></div>
+  </div>
+  <div class="vault-body" id="vault-body">
+    <div class="vault-empty">
+      <div class="vault-empty-icon">🌱</div>
+      <div class="vault-empty-text">Your vault is empty.<br>Pull your first card to begin.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIVACY POLICY SCREEN -->
+<div id="screen-privacy" class="screen">
+  <div class="privacy-header">
+    <button class="btn-back" onclick="goBack()">←</button>
+    <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--dark);">Privacy & Terms</div>
+  </div>
+  <div class="privacy-body">
+    <div class="privacy-title">Privacy Policy &amp; Terms of Use</div>
+    <div class="privacy-date">Effective date: 1 January 2026 · © 2026 Forteen Consulting. All rights reserved.</div>
+
+    <div class="privacy-highlight">
+      <strong>The short version:</strong> Everything you write, draw, or record in Whack stays on your device. We don't collect it, we can't see it, and we never share it. Your creative thinking is yours alone.
+    </div>
+
+    <div class="privacy-section">
+      <h3>1. Who we are</h3>
+      <p>Whack is a product of Forteen Consulting, committed to unlocking creative potential in young people. This Privacy Policy explains how we handle your information when you use the Whack app.</p>
+    </div>
+
+    <div class="privacy-section">
+      <h3>2. What we collect — and what we don't</h3>
+      <p>Whack is designed to be private by default. Here is exactly what happens with your data:</p>
+      <ul>
+        <li><strong>Journal entries, drawings, and voice transcripts</strong> — stored only on your device using your browser's local storage. We have no access to this content at any time.</li>
+        <li><strong>No account required</strong> — you do not need to create an account, provide your name, email address, or any personal information to use Whack.</li>
+        <li><strong>No tracking or analytics</strong> — we do not use cookies, tracking pixels, or third-party analytics tools to monitor your behaviour within the app.</li>
+        <li><strong>No advertising</strong> — Whack contains no advertising and we do not share data with advertising networks.</li>
+        <li><strong>Voice recordings</strong> — when you use Voice mode, speech is processed locally by your device's browser (Web Speech API). Audio is not transmitted to or stored on our servers.</li>
+      </ul>
+    </div>
+
+    <div class="privacy-section">
+      <h3>3. Young people and privacy</h3>
+      <p>Whack is designed for young people, including those under 18. We take this responsibility seriously. Because we collect no personal data, there is no personal information about minors on our systems. Parents and guardians should be aware that journal entries are stored on the device being used. Clearing browser storage or using private/incognito mode will delete all stored entries.</p>
+    </div>
+
+    <div class="privacy-section">
+      <h3>4. Data stored on your device</h3>
+      <p>Your entries are saved to your browser's <code>localStorage</code>. This means:</p>
+      <ul>
+        <li>Your data stays on your device and is not backed up to the cloud.</li>
+        <li>Clearing your browser's site data or cache will permanently delete your vault.</li>
+        <li>Different browsers or devices will have separate vaults with no shared data between them.</li>
+        <li>You can delete all stored data at any time by clearing your browser's site data for this app.</li>
+      </ul>
+    </div>
+
+    <div class="privacy-section">
+      <h3>5. Third-party services</h3>
+      <p>Whack loads fonts from Google Fonts (fonts.googleapis.com). This request may log your IP address as part of normal web infrastructure. No other third-party services are used. We do not use social media login, payment processors, or external APIs that handle personal data.</p>
+    </div>
+
+    <div class="privacy-section">
+      <h3>6. Changes to this policy</h3>
+      <p>If we make material changes to this Privacy Policy, we will update the effective date above. We encourage you to review this policy periodically. Continued use of Whack after changes constitutes acceptance of the updated policy.</p>
+    </div>
+
+    <div class="privacy-section">
+      <h3>7. Terms of use</h3>
+      <p>By using Whack you agree to use it for personal, non-commercial creative development. The Whack daily card experience and app interface are © 2026 Forteen Consulting. The Creative Whack Pack card framework is inspired by the work of Roger von Oech. You may not reproduce, distribute, or commercialise any part of this application without written permission from Forteen Consulting. All creative content you produce using Whack remains entirely your own intellectual property.</p>
+    </div>
+
+    <div class="privacy-section">
+      <h3>8. Contact us</h3>
+      <p>For privacy questions or concerns, please reach out to Forteen Consulting directly through the platform or channel where you accessed this app.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const CARDS=[{num:1,title:"Give Yourself a Whack",role:"explorer",text:"Sometimes you need a jolt to shake your thinking loose — to knock yourself out of habitual patterns.",prompt:"What is one thing you believe to be true that you've never actually questioned? What happens if you challenge it right now?"},{num:2,title:"Ask 'Why?'",role:"explorer",text:"Children ask 'why' naturally. Adults forget. Why? Because they think they already know the answers.",prompt:"Pick something you do every day without thinking. Ask 'why' five times in a row. Where does that chain lead you?"},{num:3,title:"Get Out of Your Box",role:"explorer",text:"The ideas you need are probably outside the area you know best. Other fields have already solved your problem.",prompt:"Think of a challenge you're facing. What would a chef, an architect, or a game designer do differently?"},{num:4,title:"Look Somewhere Else",role:"explorer",text:"The best ideas often come from completely unrelated places — nature, history, other cultures.",prompt:"Name three places you've never looked for inspiration. Pick one. What does it teach you about your current situation?"},{num:5,title:"Dig Deeper",role:"explorer",text:"The first right answer is rarely the best right answer. Most people stop too soon.",prompt:"What's the first idea you always have about something? Now dig past it. What's the second idea? The fifth?"},{num:6,title:"Change Viewpoints",role:"explorer",text:"Reality looks completely different depending on where you stand. Every perspective reveals something new.",prompt:"Think of someone who completely disagrees with you on something. What do they see that you don't?"},{num:7,title:"See the Big Picture",role:"explorer",text:"We often get lost in details and forget to zoom out. What patterns emerge when you pull back?",prompt:"Zoom out on something you're in the middle of. From a 10-year view, what matters? What doesn't?"},{num:8,title:"Try A Random Idea",role:"explorer",text:"Random inputs disrupt fixed thinking. Connect your problem to something completely unrelated.",prompt:"Look around you right now. Pick the first random object you see. How does it relate to something you're thinking about?"},{num:9,title:"Drop An Assumption",role:"explorer",text:"Every idea rests on invisible foundations — things we accept without question. What if one wasn't true?",prompt:"What's the biggest assumption you're making about something you're working on? What if you dropped it completely?"},{num:10,title:"Find A Pattern",role:"explorer",text:"Creativity is connecting things others haven't connected. Patterns hide in plain sight everywhere.",prompt:"Name five seemingly unrelated things in your life right now. What patterns or connections do you see between them?"},{num:15,title:"Let Your Mind Wander",role:"artist",text:"Your best ideas never arrive on command. They emerge when you stop forcing them.",prompt:"Write without stopping, without editing, without censoring. Begin with: 'What if nobody was watching...'"},{num:16,title:"See the Obvious",role:"artist",text:"The obvious answer is always obvious after someone sees it. Most breakthroughs were hiding in plain sight.",prompt:"What's something you've been overthinking? Explain the simplest possible answer as if to a 10-year-old."},{num:17,title:"Think Like A Kid",role:"artist",text:"Kids ask impossible questions and don't know what can't be done. This is not ignorance. It's power.",prompt:"If a 7-year-old inherited your biggest problem today, what would they try? Write three things they'd do that you'd never do."},{num:18,title:"Ask 'What If?'",role:"artist",text:"Two words that have changed the world more than any others. What if? They open every door.",prompt:"Write 5 'what if' questions about your life, your work, or the world. Make one of them genuinely ridiculous."},{num:19,title:"Challenge the Rules",role:"artist",text:"Every rule was made by someone who had a reason. That reason may no longer exist.",prompt:"Name a rule in your life or world that you've never questioned. Who made it? Does it still make sense?"},{num:20,title:"Be Whacky",role:"artist",text:"Absurd ideas loosen the mind. The wildest idea in the room often contains a real gem.",prompt:"Describe the most ridiculous, impractical, gloriously over-the-top solution to something that annoys you. Go fully wild."},{num:21,title:"Simplify",role:"artist",text:"Most things are more complicated than they need to be. Complexity hides behind a fear of looking too simple.",prompt:"Take something complex in your life. Reduce it to a single sentence. Then a single word."},{num:22,title:"Exaggerate",role:"artist",text:"Push things to their extreme and patterns become clear. Exaggeration is creativity's microscope.",prompt:"Take an idea you're exploring. Make it 10 times bigger. Then 10 times smaller. What do you notice."},{num:31,title:"Don't Force It",role:"judge",text:"Some ideas are like seeds — they need time and the right conditions. Forcing kills them.",prompt:"Is there something you're pushing too hard right now? What would happen if you put it down for a week?"},{num:32,title:"Pause for a Bit",role:"judge",text:"Action is addictive. But the pause before the next move is where wisdom lives.",prompt:"What decision are you rushing? What would you notice if you gave yourself 48 hours of silence before deciding?"},{num:33,title:"See the Positive",role:"judge",text:"Every constraint is also a gift. Every problem is also a direction.",prompt:"Take your biggest current challenge. List 5 things it's forcing you to develop that you wouldn't have otherwise."},{num:35,title:"Solve the Right Problem",role:"judge",text:"We spend enormous energy solving the wrong problem. The real problem is usually one level up.",prompt:"Name a problem you're trying to solve. Now ask: what's the problem BEHIND that problem? And behind that one?"},{num:39,title:"Slay A Sacred Cow",role:"warrior",text:"Every system has untouchable beliefs. The most powerful move is often the one everyone says is impossible.",prompt:"What's the 'sacred cow' in something you care about — the thing everyone accepts but maybe shouldn't?"},{num:41,title:"Check Your Timing",role:"warrior",text:"The best idea at the wrong time is still the wrong idea. Timing is a creative skill.",prompt:"Think of something you want to do. Is this the right moment, or are you rushing it? What would 'perfect timing' look like?"},{num:43,title:"Believe in Yourself",role:"warrior",text:"Self-doubt is creativity's most effective enemy. The first person who needs to believe in your idea is you.",prompt:"Write a letter from your most confident self to your most doubtful self about an idea you've been afraid to pursue."},{num:45,title:"Fight For It",role:"warrior",text:"Every idea worth having faces opposition. The ones that change things are the ones someone refused to abandon.",prompt:"What idea or dream do you keep talking yourself out of? Write the case FOR it, as if you were its defense lawyer."},{num:46,title:"Flex Your Risk Muscle",role:"warrior",text:"Risk tolerance is a muscle. It grows with use and atrophies with comfort.",prompt:"Name one small risk you could take this week that scares you slightly but won't ruin you. What's stopping you?"},{num:50,title:"Be Persistent",role:"warrior",text:"Most ideas fail before they succeed. The difference is persistence.",prompt:"What's something you gave up on too soon? Write what the story would look like if you'd kept going."},{num:63,title:"Learn from Mistakes",role:"warrior",text:"Mistakes aren't failures. They're the most honest form of feedback available to you.",prompt:"Name your most significant recent mistake. What did it teach you that success never could have?"},{num:64,title:"Give Yourself a Pat on the Back",role:"warrior",text:"Creative work is hard. You showed up today. That matters more than you know.",prompt:"Write about something you did recently that you haven't given yourself credit for. Be genuinely generous with yourself."}];
+
+const ROLE_CSS={explorer:'role-explorer',artist:'role-artist',judge:'role-judge',warrior:'role-warrior'};
+const ROLE_LBL={explorer:'🧭 Explorer',artist:'🎨 Artist',judge:'⚖️ Judge',warrior:'⚔️ Warrior'};
+const ROLE_DOT={explorer:'#6B8C6E',artist:'#C8893A',judge:'#5C4A35',warrior:'#C4573A'};
+
+let S={
+  card:null,vault:JSON.parse(localStorage.getItem('whack_vault')||'[]'),
+  streak:parseInt(localStorage.getItem('whack_streak')||'1'),
+  timer:{running:false,remaining:300,iv:null},duration:300,
+  mode:'write',voiceRec:false,voiceIv:null,voiceSecs:0,voiceText:'',recognition:null,
+  canvasData:null,drawColor:'#1C1410',drawSize:3,isDrawing:false,lastX:0,lastY:0
+};
+let ctx=null;
+
+// ===== NAVIGATION HISTORY =====
+let navHistory = ['screen-welcome'];
+
+function showOnboarding(){
+  document.getElementById('onboarding-overlay').style.display='flex';
+}
+function startApp(){
+  showOnboarding();
+}
+function dismissOnboarding(){
+  document.getElementById('onboarding-overlay').style.display='none';
+  goTo('screen-draw');
+}
+function goTo(id){
+  // Push current screen to history before navigating
+  const current = document.querySelector('.screen.active');
+  if(current && current.id !== id) {
+    navHistory.push(current.id);
+    if(navHistory.length > 10) navHistory.shift(); // cap history
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById(id);
+  t.classList.add('active'); t.style.animation='none'; t.offsetHeight; t.style.animation='';
+  if(id==='screen-vault') renderVault();
+  if(id==='screen-draw') updateDrawScreen();
+  if(id==='screen-card') setTimeout(resizeCanvas,60);
+}
+function goBack(){
+  if(navHistory.length > 1) {
+    navHistory.pop(); // remove current
+    const prev = navHistory[navHistory.length-1];
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const t=document.getElementById(prev);
+    t.classList.add('active'); t.style.animation='none'; t.offsetHeight; t.style.animation='';
+    if(prev==='screen-vault') renderVault();
+    if(prev==='screen-draw') updateDrawScreen();
+    if(prev==='screen-card') setTimeout(resizeCanvas,60);
+  } else {
+    goTo('screen-welcome');
+  }
+}
+function revealCard(){
+  const seen=S.vault.map(e=>e.cardNum);
+  const unseen=CARDS.filter(c=>!seen.includes(c.num));
+  const pool=unseen.length>0?unseen:CARDS;
+  S.card=pool[Math.floor(Math.random()*pool.length)];
+  const deck=document.getElementById('card-deck');
+  deck.style.transform='scale(0.94)'; deck.style.transition='transform 0.12s';
+  setTimeout(()=>{deck.style.transform=''; populateCard(S.card); goTo('screen-card'); resetTimer(); switchMode('write');},140);
+}
+function populateCard(c){
+  document.getElementById('card-num').textContent=c.num;
+  document.getElementById('card-title').innerHTML=fmtTitle(c.title);
+  document.getElementById('card-text').textContent=c.text;
+  document.getElementById('prompt-text').textContent=c.prompt;
+  const b=document.getElementById('role-badge');
+  b.className='role-badge '+ROLE_CSS[c.role]; b.textContent=ROLE_LBL[c.role];
+  document.getElementById('journal-input').value='';
+  document.getElementById('word-count').textContent='0 words';
+  S.voiceText=''; S.canvasData=null;
+  document.getElementById('voice-transcript').textContent='';
+  document.getElementById('voice-transcript').classList.remove('visible');
+}
+function fmtTitle(t){const w=t.split(' ');if(w.length>=2){const l=w.pop();return w.join(' ')+' <em>'+l+'</em>';}return'<em>'+t+'</em>';}
+
+function resetTimer(){clearInterval(S.timer.iv);S.timer.running=false;S.timer.remaining=S.duration;updateTimerUI();document.getElementById('timer-btn').textContent='Start';}
+function toggleTimer(){
+  if(S.timer.running){clearInterval(S.timer.iv);S.timer.running=false;document.getElementById('timer-btn').textContent='Resume';}
+  else{S.timer.running=true;document.getElementById('timer-btn').textContent='Pause';
+    S.timer.iv=setInterval(()=>{S.timer.remaining--;updateTimerUI();if(S.timer.remaining<=0){clearInterval(S.timer.iv);S.timer.running=false;document.getElementById('timer-btn').textContent='Done ✓';document.getElementById('timer-text').textContent='Time!';}},1000);}
+}
+function updateTimerUI(){
+  const r=S.timer.remaining;
+  document.getElementById('timer-text').textContent=Math.floor(r/60)+':'+(r%60).toString().padStart(2,'0');
+  const pct=(r/S.duration)*100; const urgent=r<=60;
+  document.getElementById('timer-bar').style.width=pct+'%';
+  document.getElementById('timer-bar').classList.toggle('urgent',urgent);
+  document.getElementById('timer-dot').classList.toggle('urgent',urgent);
+}
+function updateWordCount(){const t=document.getElementById('journal-input').value.trim();const w=t?t.split(/\s+/).length:0;document.getElementById('word-count').textContent=w+' word'+(w!==1?'s':'');}
+
+function switchMode(m){
+  S.mode=m;
+  ['write','voice','draw'].forEach(x=>{document.getElementById('tab-'+x).classList.toggle('active',x===m);});
+  document.getElementById('journal-input').style.display=m==='write'?'block':'none';
+  document.getElementById('voice-panel').classList.toggle('visible',m==='voice');
+  document.getElementById('draw-panel').classList.toggle('visible',m==='draw');
+  if(m==='draw') setTimeout(resizeCanvas,60);
+}
+
+function toggleVoice(){if(S.voiceRec)stopVoice();else startVoice();}
+function startVoice(){
+  S.voiceRec=true; S.voiceSecs=0;
+  const btn=document.getElementById('mic-btn');
+  btn.classList.add('recording'); btn.textContent='⏹';
+  document.getElementById('voice-hint').textContent='Recording… tap the button to stop.';
+  const dur=document.getElementById('voice-duration');
+  dur.style.opacity='1'; dur.textContent='0:00';
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(SR){
+    S.recognition=new SR(); S.recognition.continuous=true; S.recognition.interimResults=true; S.recognition.lang='en-AU';
+    S.recognition.onresult=e=>{
+      let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;
+      const el=document.getElementById('voice-transcript');
+      el.textContent=txt; el.classList.add('visible'); S.voiceText=txt;
+      const w=txt.trim().split(/\s+/).length;
+      document.getElementById('word-count').textContent=w+' word'+(w!==1?'s':'');
+    };
+    S.recognition.start();
+  }
+  S.voiceIv=setInterval(()=>{S.voiceSecs++;const m=Math.floor(S.voiceSecs/60);const s=(S.voiceSecs%60).toString().padStart(2,'0');document.getElementById('voice-duration').textContent=m+':'+s;},1000);
+}
+function stopVoice(){
+  S.voiceRec=false; clearInterval(S.voiceIv);
+  if(S.recognition){S.recognition.stop();S.recognition=null;}
+  const btn=document.getElementById('mic-btn');
+  btn.classList.remove('recording'); btn.textContent='🎤';
+  document.getElementById('voice-hint').textContent='Tap mic to record again.';
+}
+
+function resizeCanvas(){
+  const canvas=document.getElementById('draw-canvas');
+  const panel=document.getElementById('draw-panel');
+  if(!panel.classList.contains('visible'))return;
+  const right=document.querySelector('.card-right');
+  const usedH=
+    (document.querySelector('.journal-top-row')||{offsetHeight:0}).offsetHeight+
+    (document.querySelector('.mode-tabs')||{offsetHeight:0}).offsetHeight+
+    (document.querySelector('.draw-toolbar')||{offsetHeight:0}).offsetHeight+
+    (document.querySelector('.draw-tip')||{offsetHeight:0}).offsetHeight+
+    (document.querySelector('.save-area')||{offsetHeight:0}).offsetHeight+80;
+  const avail=Math.max(160,right.clientHeight-usedH);
+  canvas.width=Math.max(200,right.clientWidth-48);
+  canvas.height=avail;
+  ctx=canvas.getContext('2d');
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle=S.drawColor; ctx.lineWidth=S.drawSize;
+}
+function setColor(el){
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active'); S.drawColor=el.dataset.color;
+  if(ctx)ctx.strokeStyle=S.drawColor;
+}
+function setBrush(el,size){
+  document.querySelectorAll('.brush-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); S.drawSize=size;
+  if(ctx)ctx.lineWidth=size;
+}
+function clearCanvas(){const c=document.getElementById('draw-canvas');if(ctx)ctx.clearRect(0,0,c.width,c.height);S.canvasData=null;}
+
+function getPos(e,canvas){
+  const r=canvas.getBoundingClientRect();
+  const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+  if(e.touches)return{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy};
+  return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};
+}
+
+window.addEventListener('load',()=>{
+  const canvas=document.getElementById('draw-canvas');
+  canvas.addEventListener('mousedown',e=>{e.preventDefault();S.isDrawing=true;if(!ctx)resizeCanvas();ctx.strokeStyle=S.drawColor;ctx.lineWidth=S.drawSize;const p=getPos(e,canvas);S.lastX=p.x;S.lastY=p.y;ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  canvas.addEventListener('mousemove',e=>{if(!S.isDrawing)return;e.preventDefault();const p=getPos(e,canvas);ctx.lineTo(p.x,p.y);ctx.stroke();S.lastX=p.x;S.lastY=p.y;});
+  canvas.addEventListener('mouseup',e=>{S.isDrawing=false;S.canvasData=canvas.toDataURL();});
+  canvas.addEventListener('mouseleave',e=>{S.isDrawing=false;if(ctx)S.canvasData=canvas.toDataURL();});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();S.isDrawing=true;if(!ctx)resizeCanvas();ctx.strokeStyle=S.drawColor;ctx.lineWidth=S.drawSize;const p=getPos(e,canvas);S.lastX=p.x;S.lastY=p.y;ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{if(!S.isDrawing)return;e.preventDefault();const p=getPos(e,canvas);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
+  canvas.addEventListener('touchend',e=>{S.isDrawing=false;S.canvasData=canvas.toDataURL();});
+});
+window.addEventListener('resize',()=>{if(S.mode==='draw')resizeCanvas();});
+
+function saveEntry(){
+  let text='',canvasImg=null;
+  if(S.mode==='write'){
+    text=document.getElementById('journal-input').value.trim();
+    if(!text){const el=document.getElementById('journal-input');el.style.borderColor='var(--terracotta)';el.placeholder='Write something first — anything counts...';setTimeout(()=>{el.style.borderColor='transparent';},1600);return;}
+  } else if(S.mode==='voice'){
+    text=S.voiceText||document.getElementById('voice-transcript').textContent.trim();
+    if(!text){document.getElementById('voice-hint').textContent='← Tap the mic to record your response first.';return;}
+  } else if(S.mode==='draw'){
+    const canvas=document.getElementById('draw-canvas');
+    canvasImg=S.canvasData||(ctx?canvas.toDataURL():null);
+    // Detect blank canvas
+    if(canvasImg){const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;if(canvasImg===tmp.toDataURL()){canvasImg=null;}}
+    if(!canvasImg){const tip=document.getElementById('draw-tip');tip.textContent='← Draw something first!';tip.style.color='var(--terracotta)';setTimeout(()=>{tip.textContent='Draw freely — finger, stylus, or mouse';tip.style.color='';},2000);return;}
+    text='[Drawing]';
+  }
+  const entry={id:Date.now(),cardNum:S.card.num,cardTitle:S.card.title,cardRole:S.card.role,mode:S.mode,text,canvasImg:canvasImg||null,date:new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})};
+  S.vault.unshift(entry);
+  localStorage.setItem('whack_vault',JSON.stringify(S.vault));
+  document.getElementById('saved-card-name').textContent=S.card.title;
+  document.getElementById('saved-entry-preview').textContent=text==='[Drawing]'?'🖌️ A drawing saved to your vault.':(text.length>120?text.substring(0,120)+'...':text);
+  clearInterval(S.timer.iv);
+  if(S.voiceRec)stopVoice();
+  launchConfetti();
+  goTo('screen-saved');
+}
+function launchConfetti(){
+  const c=document.getElementById('confetti'); c.innerHTML='';
+  const cols=['#C8893A','#C4573A','#6B8C6E','#F5EDD8','#EDE0C4'];
+  for(let i=0;i<55;i++){const p=document.createElement('div');p.className='confetti-piece';p.style.cssText=`left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};width:${6+Math.random()*7}px;height:${6+Math.random()*7}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.4}s;`;c.appendChild(p);}
+}
+function renderVault(){
+  const map=document.getElementById('vault-map'); map.innerHTML='';
+  const seen=S.vault.map(e=>e.cardNum);
+  const todayStr=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+  const todayNums=S.vault.filter(e=>e.date===todayStr).map(e=>e.cardNum);
+  for(let i=0;i<64;i++){const d=document.createElement('div');d.className='map-dot';const n=CARDS[i%CARDS.length]?.num||i+1;if(todayNums.includes(n))d.classList.add('today');else if(seen.includes(n))d.classList.add('unlocked');map.appendChild(d);}
+  document.getElementById('unlocked-count').textContent=[...new Set(seen)].length;
+  const body=document.getElementById('vault-body');
+  if(S.vault.length===0){body.innerHTML='<div class="vault-empty"><div class="vault-empty-icon">🌱</div><div class="vault-empty-text">Your vault is empty.<br>Pull your first card to begin.</div></div>';return;}
+  body.innerHTML='';
+  S.vault.forEach((e,i)=>{
+    const el=document.createElement('div'); el.className='vault-entry'; el.style.animationDelay=(i*0.04)+'s';
+    const icon=e.mode==='draw'?'🖌️':e.mode==='voice'?'🎤':'✏️';
+    el.innerHTML=`<div class="entry-header"><div class="entry-card-name"><span class="entry-role-dot" style="background:${ROLE_DOT[e.cardRole]||'#888'}"></span>${e.cardTitle}<span style="font-size:11px;opacity:0.4;margin-left:2px;">${icon}</span></div><div class="entry-date">${e.date}</div></div>${e.text!=='[Drawing]'?`<div class="entry-text">${e.text.length>200?e.text.substring(0,200)+'...':e.text}</div>`:''}${e.canvasImg?`<img class="entry-canvas-preview" src="${e.canvasImg}" alt="Drawing"/>`:''}`; 
+    body.appendChild(el);
+  });
+}
+function updateDrawScreen(){
+  document.getElementById('streak-num').textContent=S.streak;
+  const n=S.vault.length;
+  document.getElementById('vault-count-badge').textContent=n+' entr'+(n===1?'y':'ies');
+}
+updateDrawScreen();
+</script>
+</body>
+</html>
